@@ -1,15 +1,15 @@
 const express = require("express");
-const connectDb = require("./config/dbConnection");
-const errorHandler = require("./middlewares/errorHandler");
+const connectDb = require("./config/dbconection");
+const errorHandler = require("./middleware/errorHandler");
 const cors= require("cors");
 const hbs = require("hbs");
 const path = require("path");
 const multer = require('multer');
-const { GridFsStorage } = require("multer-gridfs-storage");
+//const { GridFsStorage } = require("multer-gridfs-storage");
 // const upload = multer({ dest : 'uploads/'})
 const mongoose = require("mongoose");
-const doctorsDetails = require("./routes/doctorsDetails");
-const Profie= require("./model/Profie")
+const doctorsDetails = require("./routes/doctorDetails");
+const Profie= require("./models/Profie")
 const app = express();
 app.use(express.static("public"));
 
@@ -21,7 +21,7 @@ const users = [
     { name: "Jaikirat", age: 20 },
 ];
 
-const port = 3000 || 5000;
+const port = 7000 || 5000;
 const dotenv = require("dotenv");
  dotenv.config();
  connectDb();
@@ -69,27 +69,20 @@ const storage = multer.diskStorage({
 //   const upload = multer({ storage: storage })
  const upload = multer({storage : storage});
 app.post("/profile", upload.single("avatar"), async function(req, res , next) {
-    
     console.log(req.body);
     console.log(req.file);
     // console.log(req.file.path)
     let {title} = req.body;
     let {path} = req.file;
-    // let newProfie= new Profie({image:req.file.path});
-    // await newProfie.save()
-    // res.render("profile",{image:req.file.path})
-    // const imagePath = "/uploads/" + req.file.filename.replace(/\\/g, "/");
     let newProfie = new Profie({ title:title ,  image: path });
     await newProfie.save();
     res.render("profile", { image: path });
-    // return res.redirect("/home");
+    
 });
 app.get("/profile",async(req,res)=>{
     
     let allblog=await Profie.find();
-    // console.log(allblog)
-    // console.warn("THISHSHSHSH")
-    console.log("chalgya");
+    console.log("chalgya oyee");
     
     res.render("profile",{profile : allblog});
 }) 

@@ -1,41 +1,61 @@
 const asyncHandler = require("express-async-handler");
 const bcrypt = require("bcrypt");
-const user = require("../models/userModel");
+const jwt = require("jsonwebtoken");
+const User = require("../models/userModel");
 require("dotenv").config();
-const registerUser = asyncHandler(async(req , res)=>{
-    const{ name , email , password , phoneNumber}=req.body;
-    if(!firstName || lastName || gender || age || bloodGroup  || !emial || !password || !phoneNumber){
+
+const registerUser = asyncHandler(async (req, res) => {
+    const { firstName, lastName, age, gender, bloodGroup, email, phoneNumber, password } = req.body;
+
+    if (!firstName || !lastName || !age || !gender || !bloodGroup || !email || !phoneNumber || !password) {
         res.status(400);
         throw new Error("Please fill all fields");
     }
-    const userExists = await User.findOne({email});
-    if(userExists){
-        return res.status(400).json({meassage : "user already exists"});
+
+    const userExists = await User.findOne({ email });
+    if (userExists) {
+        return res.status(400).json({ message: "User already exists" });
     }
+
     const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(password , salt);
-    const user = await user.create({
-        firstName ,
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    const newUser = await User.create({
+        firstName,
         lastName,
         age,
         gender,
         bloodGroup,
         email,
         phoneNumber,
-        password:hashedPassword,
+        password: hashedPassword,
     });
-    res.status(201).json({ message : "user registered succesfully" , user});
-})
+
+    res.status(201).json({ message: "User registered successfully", user: newUser });
+});
+
 const loginUser = asyncHandler(async (req, res) => {
     const { email, password } = req.body;
     if (!email || !password) {
         res.status(400);
         throw new Error("Please provide email and password");
     }
+    
     const user = await User.findOne({ email });
+    
     if (user && (await bcrypt.compare(password, user.password))) {
+        // Generate JWT token
+        const token = jwt.sign(
+            { id: user._id, email: user.email },
+            process.env.PRIVATE_KEY,
+            { expiresIn: "1h" }  // Token expiration time
+        );
+
+        console.log(token)
+
         res.status(200).json({
-            message: "User logged in successfully",
+            message: "Login successful",
+            token,
             user: {
                 id: user._id,
                 firstName: user.firstName,
@@ -46,6 +66,7 @@ const loginUser = asyncHandler(async (req, res) => {
     } else {
         res.status(401);
         throw new Error("Invalid email or password");
-    }
+    }
 });
-module.exports = { registerUser, loginUser}
+
+module.exports = { registerUser, loginUser };

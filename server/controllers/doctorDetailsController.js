@@ -1,30 +1,30 @@
-const mongoose = require("mongoose");
+const asyncHandler = require("express-async-handler");
+const Doctor = require("../models/doctorDetailsModel");
+require("dotenv").config();
 
-const doctorSchema = new mongoose.Schema({
-    name: {
-        type: String,
-        required: true,
-    },
-    speciality: {
-        type: String,
-        required: true,
-    },
-    phoneNumber: {
-        type: String,
-        required: true,
-    },
-    experience: {
-        type: Number, // years of experience
-        required: true,
-    },
-    address: {
-        type: String,
-        required: true,
-    },
-}, {
-    timestamps: true,
+const registerDoctor = asyncHandler(async (req, res) => {
+    const { DoctorName, speciality, experience, phonenumber, address , email} = req.body;
+    if (!DoctorName || !speciality || !experience || !phonenumber || !address || ! email ) {
+        res.status(400);
+        throw new Error("Please fill all required fields");
+    }
+    const doctorExists = await Doctor.findOne({ "email": email });
+    if (doctorExists) {
+        return res.status(400).json({ message: "Doctor already exists" });
+    }
+    const newDoctor = await Doctor.create({
+        DoctorName,
+        speciality,
+        experience,
+        phonenumber,
+        address,
+        email
+    });
+
+    res.status(201).json({ message: "Doctor registered successfully", doctor: newDoctor });
 });
-
-const Doctor = mongoose.model("Doctor", doctorSchema);
-
-module.exports = Doctor;
+const getDoctors = asyncHandler(async (req, res) => {
+    const doctors = await Doctor.find({});
+    res.status(200).json(doctors);
+});
+module.exports = { registerDoctor , getDoctors};
